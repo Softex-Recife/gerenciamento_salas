@@ -1,12 +1,19 @@
+# -*- coding: utf-8 -*-
+#!/usr/bin/python
+
 import time
 from itertools import chain
 import email
 import imaplib
+from datetime import datetime
+from urllib.parse import unquote
+import re
+from Event import Event
 
 imap_ssl_host = 'imap.gmail.com'  # imap.mail.yahoo.com
 imap_ssl_port = 993
 username = 'softexwhatsapp1@gmail.com'
-password = '
+password = '246810@softexrecife'
 
 # Restrict mail search. Be very specific.
 # Machine should be very selective to receive messages.
@@ -39,7 +46,6 @@ server.login(username, password)
 server.select('INBOX')
 
 result, data = server.uid('search', None, search_string(uid_max, criteria))
-
 uids = [int(s) for s in data[0].split()]
 if uids:
     uid_max = max(uids)
@@ -47,12 +53,85 @@ if uids:
 
 server.logout()
 
+def get_values(text):
+  splited = text.split("\\t:")
+  #print(splited)
+  splited = splited[1].replace("\\r\\n", " ")
+  return splited
+
+def get_tipo(text):
+  text = text.replace(":\\r\\n", "")
+  tipo = text.split(" ")[-1]
+  return tipo
+
+def get_schedule(text):
+  text = get_values(text)
+  splited = text.split()
+  begin = datetime.strptime(f'{splited[1]} {splited[2]}', "%d/%m/%Y %H:%M") 
+  end = datetime.strptime(f'{splited[1]} {splited[4]}', "%d/%m/%Y %H:%M")
+  return begin, end
+
+def get_room(text):
+  text = get_values(text)
+  text = text.replace("=", "%").replace(" ", "")
+  text = unquote(text)
+  return text
+
+def get_id_reserva(text):
+  text = get_values(text)
+  text = text.replace(" ", "")
+  return text
+
+def get_booking_name(text):
+  text = get_values(text)
+  text = text.strip()
+  return text
+
+def get_phone(text):
+  text = get_values(text)
+  text = text.strip()
+  return text
+
+def get_obs(text):
+  text = get_values(text)
+  text = text.strip()
+  return text
+
+def get_mail_value(obs_field):
+  emails = re.findall(r"[a-z0-9\.\-+_]+@[a-z0-9\.\-+_]+\.[a-z]+", get_obs(obs_field).lower())
+  if (emails):
+    return emails
+  else:
+    return False
+
+def get_info_from_mail(mail):
+    tipo_index = mail.find("Dados da reserva")
+    quando_index = mail.find("Quando")
+    local_index = mail.find("ITBC - Reservas")
+    id_reserva_index = mail.find("ID             \\t")
+    nome_reserva_index = mail.find("Nome completo")
+    telefone_index = mail.find("Telefone")
+    obs_index = mail.find("Observa=C3=A7=C3=A3o")
+    criado_index = mail.find("Criada")
+    fim_index = mail.find("Pode acessar =C3=A0 agenda:")
+
+    tipo = get_tipo(mail[tipo_index:quando_index])
+    schedule = get_schedule(mail[quando_index:local_index])
+    room = get_room(mail[local_index:id_reserva_index])
+    id_reserva = get_id_reserva(mail[id_reserva_index:nome_reserva_index])
+    name = get_booking_name(mail[nome_reserva_index:telefone_index])
+    phone = get_phone(mail[telefone_index:obs_index])
+    obs = get_obs(mail[obs_index:criado_index])
+    emails = get_mail_value(mail[obs_index:criado_index])
+    #print(tipo, schedule, room, id_reserva, name, phone, obs, emails)
+    return tipo, schedule, room, id_reserva, name, phone, obs, emails
+
+
 
 # Keep checking messages ...
 # I don't like using IDLE because Yahoo does not support it.
 while 1:
     # Have to login/logout each time because that's the only way to get fresh results.
-
     server = imaplib.IMAP4_SSL(imap_ssl_host, imap_ssl_port)
     server.login(username, password)
     server.select('INBOX')
@@ -64,13 +143,12 @@ while 1:
         # Have to check again because Gmail sometimes does not obey UID criterion.
         if uid > uid_max:
             result, data = server.fetch(str(uid), '(RFC822)')  # fetch entire message
-            msg = email.message_from_string(str(data[0][1]))
-            
+            msg = email.message_from_string(str(data[0][1]))    
             uid_max = uid
-        
-            text = get_first_text_block(msg)
+            tipo, schedule, room, id_reserva, name, phone, obs, emails = get_info_from_mail(str(msg))
+            event = Event(tipo, schedule, room, id_reserva, name, phone, obs, emails)
             print( 'New message :::::::::::::::::::::')
-            print( text)
+            print(event)
 
     server.logout()
     time.sleep(1)
