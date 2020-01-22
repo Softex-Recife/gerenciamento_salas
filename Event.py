@@ -1,7 +1,8 @@
 class Event:
-    def __init__(self, tipo, schedule, room, id_reserva, name, phone, obs, emails):
+    def __init__(self, tipo, begin, end, room, id_reserva, name, phone, obs, emails):
         self.__tipo = tipo
-        self.__schedule = schedule
+        self.__end = end
+        self.__begin = begin
         self.__room = room
         self.__id_reserva = id_reserva
         self.__name = name
@@ -13,8 +14,11 @@ class Event:
     def get_tipo(self):
         return self.__tipo
 
-    def get_schedule(self):    
-        return self.__schedule
+    def get_begin(self):    
+        return self.__begin
+
+    def get_end(self):    
+        return self.__end
 
     def get_room(self):    
         return self.__room
@@ -38,5 +42,5 @@ class Event:
         return self.__senha
 
     def __str__(self):
-        return f"{self.__tipo}, {self.__schedule}, {self.__room}, {self.__id_reserva}, {self.__name}, {self.__phone}, {self.__obs}, {self.__emails}"
+        return f"{self.__tipo},{self.__begin}, {self.__end} , {self.__room}, {self.__id_reserva}, {self.__name}, {self.__phone}, {self.__obs}, {self.__emails}"
         

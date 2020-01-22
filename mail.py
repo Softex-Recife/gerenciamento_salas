@@ -116,7 +116,7 @@ def get_info_from_mail(mail):
     fim_index = mail.find("Pode acessar =C3=A0 agenda:")
 
     tipo = get_tipo(mail[tipo_index:quando_index])
-    schedule = get_schedule(mail[quando_index:local_index])
+    begin, end = get_schedule(mail[quando_index:local_index])
     room = get_room(mail[local_index:id_reserva_index])
     id_reserva = get_id_reserva(mail[id_reserva_index:nome_reserva_index])
     name = get_booking_name(mail[nome_reserva_index:telefone_index])
@@ -124,7 +124,7 @@ def get_info_from_mail(mail):
     obs = get_obs(mail[obs_index:criado_index])
     emails = get_mail_value(mail[obs_index:criado_index])
     #print(tipo, schedule, room, id_reserva, name, phone, obs, emails)
-    return tipo, schedule, room, id_reserva, name, phone, obs, emails
+    return tipo, begin, end, room, id_reserva, name, phone, obs, emails
 
 
 
@@ -145,8 +145,8 @@ while 1:
             result, data = server.fetch(str(uid), '(RFC822)')  # fetch entire message
             msg = email.message_from_string(str(data[0][1]))    
             uid_max = uid
-            tipo, schedule, room, id_reserva, name, phone, obs, emails = get_info_from_mail(str(msg))
-            event = Event(tipo, schedule, room, id_reserva, name, phone, obs, emails)
+            tipo, begin, end, room, id_reserva, name, phone, obs, emails = get_info_from_mail(str(msg))
+            event = Event(tipo, begin, end, room, id_reserva, name, phone, obs, emails)
             print( 'New message :::::::::::::::::::::')
             print(event)
 
