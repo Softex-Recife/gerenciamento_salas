@@ -8,7 +8,7 @@ import imaplib
 from datetime import datetime
 from urllib.parse import unquote
 import re
-from Event import Event
+from event import Event
 
 imap_ssl_host = 'imap.gmail.com'  # imap.mail.yahoo.com
 imap_ssl_port = 993
@@ -146,7 +146,8 @@ while 1:
             msg = email.message_from_string(str(data[0][1]))    
             uid_max = uid
             tipo, begin, end, room, id_reserva, name, phone, obs, emails = get_info_from_mail(str(msg))
-            event = Event(tipo, begin, end, room, id_reserva, name, phone, obs, emails)
+            event_pwd = id_reserva[:4]
+            event = Event(id_reserva, name, begin, end, room, phone, emails, event_pwd)
             print( 'New message :::::::::::::::::::::')
             print(event)
 
