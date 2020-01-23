@@ -9,6 +9,13 @@ from datetime import datetime
 from urllib.parse import unquote
 import re
 from event import Event
+from eventDAO import EventDAO
+
+CREATE_EVENT = "nova"
+UPDATE_EVENT = "atualizada"
+DELETE_EVENT = "eliminada"
+
+event_dao = EventDAO()
 
 imap_ssl_host = 'imap.gmail.com'  # imap.mail.yahoo.com
 imap_ssl_port = 993
@@ -148,7 +155,12 @@ while 1:
             tipo, begin, end, room, id_reserva, name, phone, obs, emails = get_info_from_mail(str(msg))
             event_pwd = id_reserva[:4]
             event = Event(id_reserva, name, begin, end, room, phone, emails, event_pwd)
-            print( 'New message :::::::::::::::::::::')
+            if tipo == CREATE_EVENT:
+				event_dao.create(event)
+			elif tipo == UPDATE_EVENT:
+				event_dao.update(event)
+			elif tipo == DELETE_EVENT:
+				event_dao.delete(event)
             print(event)
 
     server.logout()
