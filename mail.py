@@ -88,10 +88,9 @@ def get_booking_name(text):
     return text
 
 def get_phone(text):
-            id, name, start, end, room, phone, emails, pwd
-    text = get_values(text)
-    text = text.strip()
-    return text
+	text = get_values(text)
+	text = text.strip()
+	return text
 
 def get_obs(text):
 	text = get_values(text)
