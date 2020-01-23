@@ -18,7 +18,7 @@ password = '246810@softexrecife'
 # Restrict mail search. Be very specific.
 # Machine should be very selective to receive messages.
 criteria = {
-    'FROM':    'naoresponda@supersaas.com'
+	'FROM':    'naoresponda@supersaas.com'
 }
 uid_max = 0
 
@@ -54,55 +54,56 @@ if uids:
 server.logout()
 
 def get_values(text):
-  splited = text.split("\\t:")
-  #print(splited)
-  splited = splited[1].replace("\\r\\n", " ")
-  return splited
+    splited = text.split("\\t:")
+    #print(splited)
+    splited = splited[1].replace("\\r\\n", " ")
+    return splited
 
 def get_tipo(text):
-  text = text.replace(":\\r\\n", "")
-  tipo = text.split(" ")[-1]
-  return tipo
+    text = text.replace(":\\r\\n", "")
+    tipo = text.split(" ")[-1]
+    return tipo
 
 def get_schedule(text):
-  text = get_values(text)
-  splited = text.split()
-  begin = datetime.strptime(f'{splited[1]} {splited[2]}', "%d/%m/%Y %H:%M") 
-  end = datetime.strptime(f'{splited[1]} {splited[4]}', "%d/%m/%Y %H:%M")
-  return begin, end
+    text = get_values(text)
+    splited = text.split()
+    begin = datetime.strptime(f'{splited[1]} {splited[2]}', "%d/%m/%Y %H:%M") 
+    end = datetime.strptime(f'{splited[1]} {splited[4]}', "%d/%m/%Y %H:%M")
+    return begin, end
 
 def get_room(text):
-  text = get_values(text)
-  text = text.replace("=", "%").replace(" ", "")
-  text = unquote(text)
-  return text
+    text = get_values(text)
+    text = text.replace("=", "%").replace(" ", "")
+    text = unquote(text)
+    return text
 
 def get_id_reserva(text):
-  text = get_values(text)
-  text = text.replace(" ", "")
-  return text
+    text = get_values(text)
+    text = text.replace(" ", "")
+    return text
 
 def get_booking_name(text):
-  text = get_values(text)
-  text = text.strip()
-  return text
+    text = get_values(text)
+    text = text.strip()
+    return text
 
 def get_phone(text):
-  text = get_values(text)
-  text = text.strip()
-  return text
+            id, name, start, end, room, phone, emails, pwd
+    text = get_values(text)
+    text = text.strip()
+    return text
 
 def get_obs(text):
-  text = get_values(text)
-  text = text.strip()
-  return text
+	text = get_values(text)
+	text = text.strip()
+	return text
 
 def get_mail_value(obs_field):
-  emails = re.findall(r"[a-z0-9\.\-+_]+@[a-z0-9\.\-+_]+\.[a-z]+", get_obs(obs_field).lower())
-  if (emails):
-    return emails
-  else:
-    return False
+	emails = re.findall(r"[a-z0-9\.\-+_]+@[a-z0-9\.\-+_]+\.[a-z]+", get_obs(obs_field).lower())
+	if (emails):
+		return emails
+	else:
+		return False
 
 def get_info_from_mail(mail):
     tipo_index = mail.find("Dados da reserva")
