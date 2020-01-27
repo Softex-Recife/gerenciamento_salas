@@ -6,7 +6,6 @@ from itertools import chain
 import email
 import imaplib
 from datetime import datetime
-from urllib.parse import unquote
 import re
 from event import Event
 from eventDAO import EventDAO
@@ -15,6 +14,14 @@ import base64
 from googleapiclient.discovery import build
 from httplib2 import Http
 from oauth2client import file, client, tools
+
+def get_mail(service, message):
+	labelIds = {"removeLabelIds": ["UNREAD"]}
+	msg = service.users().messages().get(userId='me', id=message['id']).execute()
+	msgData = msg['payload']['body']['data']
+	msgData = base64.urlsafe_b64decode(msgData.encode("utf-8")).decode('utf-8')
+	unread = service.users().messages().modify(userId='me', id=message['id'], body=labelIds).execute()
+	return msgData
 
 
 CREATE_EVENT = "nova"
@@ -54,14 +61,13 @@ def get_tipo(text):
 def get_schedule(text):
 	text = get_values(text)
 	splited = text.split()
-	begin = datetime.strptime(f'{splited[1]} {splited[2]}', "%d/%m/%Y %H:%M") 
-	end = datetime.strptime(f'{splited[1]} {splited[4]}', "%d/%m/%Y %H:%M")
+	begin = datetime.strptime(splited[1] + " " + splited[2], "%d/%m/%Y %H:%M") 
+	end = datetime.strptime(splited[1] + " " + splited[4], "%d/%m/%Y %H:%M")
 	return begin, end
 
 def get_room(text):
 	text = get_values(text)
 	text = text.replace("=", "%").replace(" ", "")
-	text = unquote(text)
 	return text
 
 def get_id_reserva(text):
