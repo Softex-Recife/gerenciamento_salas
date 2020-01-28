@@ -10,12 +10,12 @@ class Event(Base):
     __tablename__ = 'event'
 
     id = Column(Integer, primary_key=True)
-    name = Column(String(50))
+    name = Column(String(100))
     start = Column(DateTime)
     end = Column(DateTime)
-    room = Column(String(15))
-    phone = Column(String(15))
-    emails = Column(String(150))
+    room = Column(String(30))
+    phone = Column(String(20))
+    emails = Column(String(300))
     password = Column(String(10))
 
 

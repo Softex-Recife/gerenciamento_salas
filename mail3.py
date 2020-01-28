@@ -7,8 +7,8 @@ import email
 import imaplib
 from datetime import datetime
 import re
-#from event import Event
-#from eventDAO import EventDAO
+from event import Event
+from eventDAO import EventDAO
 import base64
 
 from googleapiclient.discovery import build
@@ -84,7 +84,7 @@ def get_mail_value(mail):
 	text = " ".join(mail)
 	emails = re.findall(r"[a-z0-9\.\-+_]+@[a-z0-9\.\-+_]+\.[a-z]+", text.lower())
 	if (emails):
-		return emails
+		return " ".join(emails)
 	return None
 
 
