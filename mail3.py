@@ -7,8 +7,8 @@ import email
 import imaplib
 from datetime import datetime
 import re
-from event import Event
-from eventDAO import EventDAO
+#from event import Event
+#from eventDAO import EventDAO
 import base64
 
 from googleapiclient.discovery import build
@@ -30,94 +30,76 @@ DELETE_EVENT = "eliminada"
 
 event_dao = EventDAO()
 
-def search_string(uid_max, criteria):
-	c = list(map(lambda t: (t[0], '"'+str(t[1])+'"'), criteria.items())) + [('UID', '%d:*' % (uid_max+1))]
-	return '(%s)' % ' '.join(chain(*c))
-	# Produce search string in IMAP format:
-	#   e.g. (FROM "me@gmail.com" SUBJECT "abcde" BODY "123456789" UID 9999:*)
+def get_type(mail):
+	mail_type = list(filter(lambda x: "Dados da reserva" in x, mail))
+	if(len(mail_type) == 0):
+		return None
+	mail_type = mail_type[0].split(" ")[-1]
+	mail_type = mail_type.replace(":", "")
+	mail_type = mail_type.strip()
+	return mail_type
 
-
-def get_first_text_block(msg):
-	type = msg.get_content_maintype()
-
-	if type == 'multipart':
-		for part in msg.get_payload():
-			if part.get_content_maintype() == 'text':
-				return part.get_payload()
-	elif type == 'text':
-		return msg.get_payload()
-
-def get_values(text):
-	splited = text.split("\\t:")
-	#print(splited)
-	splited = splited[1].replace("\\r\\n", " ")
-	return splited
-
-def get_tipo(text):
-	text = text.replace(":\\r\\n", "")
-	tipo = text.split(" ")[-1]
-	return tipo
-
-def get_schedule(text):
-	text = get_values(text)
+def get_schedule(mail):
+	text = list(filter(lambda x: "Quando" in x, mail))
+	if(len(text) == 0):
+		return None, None
+	text = text[0].split("\t:")[1]
 	splited = text.split()
 	begin = datetime.strptime(splited[1] + " " + splited[2], "%d/%m/%Y %H:%M") 
 	end = datetime.strptime(splited[1] + " " + splited[4], "%d/%m/%Y %H:%M")
 	return begin, end
 
-def get_room(text):
-	text = get_values(text)
-	text = text.replace("=", "%").replace(" ", "")
-	return text
+def get_room(mail):
+	text = list(filter(lambda x: "ITBC - Reservas" in x, mail))
+	if(len(text) == 0):
+		return None
+	text = text[0].split("\t:")[1]
+	return text.strip()
 
-def get_id_reserva(text):
-	text = get_values(text)
-	text = text.replace(" ", "")
-	return text
-
-def get_booking_name(text):
-	text = get_values(text)
+def get_booking_name(mail):
+	text = list(filter(lambda x: "Nome completo" in x, mail))
+	if(len(text) == 0):
+		return None
+	text = text[0].split("\t:")[1]
 	text = text.strip()
 	return text
 
-def get_phone(text):
-	text = get_values(text)
+def get_id_reserva(mail):
+	text = list(filter(lambda x: "ID" in x, mail))
+	if(len(text) == 0):
+		return None
+	text = text[0].split("\t:")[1]
 	text = text.strip()
 	return text
 
-def get_obs(text):
-	text = get_values(text)
+def get_phone(mail):
+	text = list(filter(lambda x: "Telefone" in x, mail))
+	if(len(text) == 0):
+		return None
+	text = text[0].split("\t:")[1]
 	text = text.strip()
 	return text
 
-def get_mail_value(obs_field):
-	emails = re.findall(r"[a-z0-9\.\-+_]+@[a-z0-9\.\-+_]+\.[a-z]+", get_obs(obs_field).lower())
+def get_mail_value(mail):
+	text = " ".join(mail)
+	emails = re.findall(r"[a-z0-9\.\-+_]+@[a-z0-9\.\-+_]+\.[a-z]+", text.lower())
 	if (emails):
 		return emails
-	else:
-		return False
+	return None
+
 
 def get_info_from_mail(mail):
-	tipo_index = mail.find("Dados da reserva")
-	quando_index = mail.find("Quando")
-	local_index = mail.find("ITBC - Reservas")
-	id_reserva_index = mail.find("ID")
-	nome_reserva_index = mail.find("Nome completo")
-	telefone_index = mail.find("Telefone")
-	obs_index = mail.find("Observação")
-	criado_index = mail.find("Criada")
-	fim_index = mail.find("Pode acessar à agenda:")
+	mail_splited = mail.split("\r\n")
 
-	tipo = get_tipo(mail[tipo_index:quando_index])
-	begin, end = get_schedule(mail[quando_index:local_index])
-	room = get_room(mail[local_index:id_reserva_index])
-	id_reserva = get_id_reserva(mail[id_reserva_index:nome_reserva_index])
-	name = get_booking_name(mail[nome_reserva_index:telefone_index])
-	phone = get_phone(mail[telefone_index:obs_index])
-	obs = get_obs(mail[obs_index:criado_index])
-	emails = get_mail_value(mail[obs_index:criado_index])
+	tipo = get_type(mail_splited)
+	begin, end = get_schedule(mail_splited)
+	room = get_room(mail_splited)
+	id_reserva = get_id_reserva(mail_splited)
+	name = get_booking_name(mail_splited)
+	phone = get_phone(mail_splited)
+	emails = get_mail_value(mail_splited)
 	#print(tipo, schedule, room, id_reserva, name, phone, obs, emails)
-	return tipo, begin, end, room, id_reserva, name, phone, obs, emails
+	return tipo, begin, end, room, id_reserva, name, phone, emails
 
 def main():
 	store = file.Storage('token.json')
@@ -137,17 +119,18 @@ def main():
 		#print ("Message snippets:")
 		for message in messages:
 			msg = get_mail(service, message)
-			tipo, begin, end, room, id_reserva, name, phone, obs, emails = get_info_from_mail(msg) 
-			event_pwd = id_reserva[:4]
-			event = Event(id_reserva, name, begin, end, room, phone, emails, event_pwd)
-			if tipo == CREATE_EVENT:
-				event_dao.create(event)
-			elif tipo == UPDATE_EVENT:
-				event_dao.update(event)
-			elif tipo == DELETE_EVENT:
-				event_dao.delete(event)
-			print(event)
-			print(msg)
+			tipo, begin, end, room, id_reserva, name, phone, emails = get_info_from_mail(msg) 
+			if(tipo and begin and end and room and id_reserva and emails):
+				event_pwd = id_reserva[:4]
+				event = Event(id_reserva, name, begin, end, room, phone, emails, event_pwd)
+				if tipo == CREATE_EVENT:
+					event_dao.create(event)
+				elif tipo == UPDATE_EVENT:
+					event_dao.update(event)
+				elif tipo == DELETE_EVENT:
+					event_dao.delete(event)
+				print(event)
+				print(msg)
 
 
 if __name__ == '__main__':
