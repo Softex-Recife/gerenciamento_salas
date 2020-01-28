@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+#!/usr/bin/python
+
 from flask import Flask, request, Response
 import json
 from eventDAO import EventDAO
