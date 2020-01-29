@@ -11,11 +11,12 @@ app = Flask(__name__)
 
 @app.route('/login', methods=['GET', 'POST', 'OPTIONS'])
 def login():
+    print(request)
     response_dict = {"nome_empresa" : "Softex-Recife", "liberar": "0", "hora_inicio" : "15:00", "hora_fim" : "16:00", "mensagem": "Não existe reserva"}
     if(request.method == "POST"):
+        print(room, password)
         room = request.json["cod_sala_reuniao"]
         password = request.json["senha"]
-        print(room, password)
         event = dao.read(room)
         if event:
             event_pwd = event["password"]
