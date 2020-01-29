@@ -10,6 +10,7 @@ import re
 from event import Event
 from eventDAO import EventDAO
 import base64
+from random import randint
 
 from googleapiclient.discovery import build
 from httplib2 import Http
@@ -105,12 +106,13 @@ def main():
 	store = file.Storage('token.json')
 	creds = store.get()
 	if not creds or creds.invalid:
+		SCOPES = 'https://www.googleapis.com/auth/gmail.modify'
 		flow = client.flow_from_clientsecrets('credentials.json', SCOPES)
 		creds = tools.run_flow(flow, store)
 	service = build('gmail', 'v1', http=creds.authorize(Http()))
 	
 	# Call the Gmail API to fetch INBOX
-	results = service.users().messages().list(userId='me',labelIds = ['UNREAD', 'INBOX'], maxResults=10).execute()
+	results = service.users().messages().list(userId='me',labelIds = ['UNREAD', 'INBOX'], q="from:naoresponda@supersaas.com").execute()
 	messages = results.get('messages', [])
 	if not messages:
 		pass
@@ -121,7 +123,7 @@ def main():
 			msg = get_mail(service, message)
 			tipo, begin, end, room, id_reserva, name, phone, emails = get_info_from_mail(msg) 
 			if(tipo and begin and end and room and id_reserva and emails):
-				event_pwd = id_reserva[:4]
+				event_pwd = randint(1000,9999)
 				event = Event(id_reserva, name, begin, end, room, phone, emails, event_pwd)
 				if tipo == CREATE_EVENT:
 					event_dao.create(event)
