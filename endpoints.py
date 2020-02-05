@@ -3,21 +3,23 @@
 
 from flask import Flask, request, Response
 import json
-from eventDAO import EventDAO
+#from eventDAO import EventDAO
 
-dao = EventDAO()
+#dao = EventDAO()
+
 
 app = Flask(__name__)
 
 @app.route('/login', methods=['GET', 'POST', 'OPTIONS'])
 def login():
-    print(request)
+    
     response_dict = {"nome_empresa" : "Softex-Recife", "liberar": "0", "hora_inicio" : "15:00", "hora_fim" : "16:00", "mensagem": "Não existe reserva"}
     if(request.method == "POST"):
-        print(room, password)
         room = request.json["cod_sala_reuniao"]
         password = request.json["senha"]
-        event = dao.read(room)
+        print(room, password)
+        #event = dao.read(room)
+        event = {"password" : "1234","name": "ITBC", "start" : "12:00", "end" : "13:00"}
         if event:
             event_pwd = event["password"]
             if event_pwd == password:
@@ -33,6 +35,9 @@ def login():
     res.headers["Access-Control-Allow-Headers"] = '*'
     return res
 
+@app.route("/")
+def hello():
+    return "Hello World"
 
-
-app.run(host="0.0.0.0", port=5004)
+if __name__ == "__main__":
+    app.run()
