@@ -5,7 +5,7 @@ import time
 from itertools import chain
 import email
 import imaplib
-from datetime import datetime
+from datetime import datetime, timedelta
 import re
 from event import Event
 from eventDAO import EventDAO
@@ -46,7 +46,7 @@ def get_schedule(mail):
 		return None, None
 	text = text[0].split("\t:")[1]
 	splited = text.split()
-	begin = datetime.strptime(splited[1] + " " + splited[2], "%d/%m/%Y %H:%M") 
+	begin = datetime.strptime(splited[1] + " " + splited[2], "%d/%m/%Y %H:%M")
 	end = datetime.strptime(splited[1] + " " + splited[4], "%d/%m/%Y %H:%M")
 	return begin, end
 
@@ -121,7 +121,10 @@ def main():
 		#print ("Message snippets:")
 		for message in messages:
 			msg = get_mail(service, message)
-			tipo, begin, end, room, id_reserva, name, phone, emails = get_info_from_mail(msg) 
+			try:
+				tipo, begin, end, room, id_reserva, name, phone, emails = get_info_from_mail(msg) 
+			except ValueError:
+				continue
 			if(tipo and begin and end and room and id_reserva and emails):
 				event_pwd = randint(1000,9999)
 				event = Event(id_reserva, name, begin, end, room, phone, emails, event_pwd)
