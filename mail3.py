@@ -13,8 +13,10 @@ import base64
 from random import randint
 
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 from httplib2 import Http
 from oauth2client import file, client, tools
+from email.mime.text import MIMEText
 
 def get_mail(service, message):
 	labelIds = {"removeLabelIds": ["UNREAD"]}
@@ -102,6 +104,40 @@ def get_info_from_mail(mail):
 	#print(tipo, schedule, room, id_reserva, name, phone, obs, emails)
 	return tipo, begin, end, room, id_reserva, name, phone, emails
 
+def create_message(sender, to, subject, message_text):
+  """Create a message for an email.
+
+  Args:
+    sender: Email address of the sender.
+    to: Email address of the receiver.
+    subject: The subject of the email message.
+    message_text: The text of the email message.
+
+  Returns:
+    An object containing a base64url encoded email object.
+  """
+  message = MIMEText(message_text)
+  recipients = to.replace(" ", ", ")
+  message['to'] = recipients
+  message['from'] = sender
+  message['subject'] = subject
+  raw = base64.urlsafe_b64encode(message.as_bytes())
+  raw = raw.decode()
+  return {'raw': raw}
+
+
+def send_mail(event, service):
+	dict_event = event.to_dict()
+	str_message = """Sua Reserva foi realizada com sucesso,	para ter acesso à {} basta se dirigir até ela e inserir a senha: {} entre o horário de {} até {}""".format(dict_event["room"], dict_event["password"], dict_event["start"], dict_event["end"])	
+	txt_message = create_message("softexwhatsapp1@gmail.com", dict_event["emails"], "Instruções de acesso a sala", str_message)
+	try:
+		message = (service.users().messages().send(userId="me", body=txt_message)
+				.execute())
+		print('Message Id: %s' % message['id'])
+	except HttpError as error:
+		print('An error occurred: %s' %error)
+
+
 def main():
 	store = file.Storage('token.json')
 	creds = store.get()
@@ -134,8 +170,8 @@ def main():
 					event_dao.update(event)
 				elif tipo == DELETE_EVENT:
 					event_dao.delete(event)
-				print(event)
-				print(msg)
+				print("read msg")
+				send_mail(event, service)
 
 
 if __name__ == '__main__':
