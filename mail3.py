@@ -8,7 +8,7 @@ import imaplib
 from datetime import datetime, timedelta
 import re
 from event import Event
-from eventDAO import EventDAO
+#from eventDAO import EventDAO
 import base64
 from random import randint
 
@@ -31,7 +31,7 @@ CREATE_EVENT = "nova"
 UPDATE_EVENT = "atualizada"
 DELETE_EVENT = "eliminada"
 
-event_dao = EventDAO()
+#event_dao = EventDAO()
 
 def get_type(mail):
 	mail_type = list(filter(lambda x: "Dados da reserva" in x, mail))
@@ -126,10 +126,12 @@ def create_message(sender, to, subject, message_text):
   return {'raw': raw}
 
 
-def send_mail(event, service):
-	dict_event = event.to_dict()
-	str_message = """Sua Reserva foi realizada com sucesso,	para ter acesso à {} basta se dirigir até ela e inserir a senha: {} entre o horário de {} até {}""".format(dict_event["room"], dict_event["password"], dict_event["start"], dict_event["end"])	
-	txt_message = create_message("softexwhatsapp1@gmail.com", dict_event["emails"], "Instruções de acesso a sala", str_message)
+def send_mail(dict_event, service):
+	str_message = """Sua Reserva foi realizada com sucesso.
+	Local: {};
+	Senha: {};
+	De {} até {}""".format(dict_event["room"], dict_event["password"], dict_event["start"], dict_event["end"])	
+	txt_message = create_message("softexwhatsapp1@gmail.com", dict_event["emails"], "Reserva para "+dict_event["room"], str_message)
 	try:
 		message = (service.users().messages().send(userId="me", body=txt_message)
 				.execute())
@@ -162,18 +164,21 @@ def main():
 			except ValueError:
 				continue
 			if(tipo and begin and end and room and id_reserva and emails):
-				event_pwd = randint(1000,9999)
-				event = Event(id_reserva, name, begin, end, room, phone, emails, event_pwd)
-				if tipo == CREATE_EVENT:
-					event_dao.create(event)
-				elif tipo == UPDATE_EVENT:
-					event_dao.update(event)
-				elif tipo == DELETE_EVENT:
-					event_dao.delete(event)
-				print("read msg")
-				send_mail(event, service)
+				if(room in ["Sala de Reunião 1", "Sala de Reunião 2", "Sala de Reunião 3", "Sala de Reunião 4"]):
+					event_pwd = randint(1000,9999)
+					event = Event(id_reserva, name, begin, end, room, phone, emails, event_pwd)
+					dict_event = event.to_dict()
+					if tipo == CREATE_EVENT:
+						event_dao.create(event)
+					elif tipo == UPDATE_EVENT:
+						event_dao.update(event)
+					elif tipo == DELETE_EVENT:
+						event_dao.delete(event)
+					print("read msg")
+					send_mail(dict_event, service)
 
 
 if __name__ == '__main__':
 	while True:
 		main()
+		#print("...")
